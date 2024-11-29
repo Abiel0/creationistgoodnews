@@ -1,0 +1,133 @@
+* {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	vertical-align: baseline;
+	background: transparent;
+	font-weight: normal;
+	text-decoration: none;
+	outline: none;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+ol, ul {
+	list-style: none;
+}
+del {
+	text-decoration: line-through;
+}
+body {
+	font-family: "GT-Eesti", Arial, Helvetica, sans-serif;
+	font-size: 17px;
+	color: #000;
+	overflow-x: hidden;
+	min-width: 320px;
+	font-weight: 500;
+}
+input,textarea,select{
+	font-family: "GT-Eesti", Arial, Helvetica, sans-serif;
+	font-weight: 500;
+}
+
+a{
+	color: #000;
+}
+.thumb{
+	display: block;
+}
+.thumb img{
+	display: block;
+	width:100%;
+}
+p{
+	line-height:1.6em;
+	font-size: 16px;
+	font-family: "GT-Eesti", Arial;
+	font-weight: 500;
+	color: #000;
+}
+.hidden{
+	display:none;
+}
+br.clear {
+	clear: both;
+	line-height: 0;
+}
+.wrapper {
+	width: 90%;
+	margin: 0 auto;
+	max-width:1519px;/* (Sorry, my screen size) */
+}
+.flex-wrapper {
+	display: flex;
+	justify-content: space-between;
+}
+
+#img_header{
+    padding-top: 30px;
+}
+
+#img_header .img_content{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px;
+}
+
+#img_header h1{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 44px;
+    font-weight: bold;
+    color: #F0A202;
+}
+
+#img_header .img_content img{
+    width: 100%;
+    border-radius: 14px;
+}
+
+#content{
+    padding-left: 180px;
+    padding-right: 180px;
+    padding-top: 60px;
+}
+
+#content .item{
+    margin-bottom: 60px;
+}
+
+#content .item h1{
+    font-size: 36px;
+    font-weight: bold;
+    color: #FF8200;
+}
+
+#content .item p{
+    font-size: 20px;
+    color: #38405F;
+}
+
+#content .item.last{
+    margin-bottom: 100px;
+}
+
+footer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 60px;
+    background-color: #CEF9F2;
+}
+
+footer p{
+    width: 90%;
+    font-size: 20px;
+    padding-bottom: 60px;
+    color: #C2A83E;
+}
+footer p a{
+    color: #C2A83E;
+}
