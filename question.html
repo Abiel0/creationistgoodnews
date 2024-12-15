@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q&A Platform</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .question-form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        .questions-list {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .question-item {
+            border-bottom: 1px solid #ddd;
+            padding: 15px 0;
+        }
+
+        .question-item:last-child {
+            border-bottom: none;
+        }
+
+        .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .question-description {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .answer-section {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .timestamp {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header, .question-form, .questions-list {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ask questions about our Faith in Jesus</h1>
+        </div>
+
+        <div class="question-form">
+            <h2>Ask a Question</h2>
+            <form id="questionForm">
+                <input type="text" id="title" placeholder="Question Title" required>
+                <textarea id="description" placeholder="Question Description" rows="4" required></textarea>
+                <button type="submit">Submit Question</button>
+                <div id="questionFormMessage"></div>
+            </form>
+        </div>
+
+        <div class="questions-list" id="questionsList">
+            <!-- Questions will be loaded here -->
+        </div>
+
+        <!-- Answer Modal -->
+        <div id="answerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+            <div style="background-color: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; margin: 50px auto;">
+                <h2>Answer Question</h2>
+                <input type="password" id="answerPassword" placeholder="Enter password" style="margin: 10px 0;">
+                <textarea id="answerText" placeholder="Your answer" rows="4" style="margin: 10px 0;"></textarea>
+                <button onclick="submitAnswer()">Submit Answer</button>
+                <button onclick="document.getElementById('answerModal').style.display='none'" style="background-color: #666;">Cancel</button>
+                <div id="answerFormMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://frquestions.vercel.app/api';
+        let currentQuestionId = null;
+
+        // Fetch and display questions
+        async function loadQuestions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/questions`);
+                const questions = await response.json();
+                displayQuestions(questions);
+            } catch (error) {
+                console.error('Error loading questions:', error);
+            }
+        }
+
+        // Display questions in the UI
+        function displayQuestions(questions) {
+            const questionsList = document.getElementById('questionsList');
+            questionsList.innerHTML = questions.length ? '' : '<p>No questions yet. Be the first to ask!</p>';
+
+            questions.sort((a, b) => b.timestamp - a.timestamp).forEach(question => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question-item';
+                
+                const date = new Date(question.timestamp);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+                questionElement.innerHTML = `
+                    <div class="question-title">${escapeHtml(question.title)}</div>
+                    <div class="question-description">${escapeHtml(question.description)}</div>
+                    <div class="timestamp">Asked on: ${formattedDate}</div>
+                    ${question.answered ? 
+                        `<div class="answer-section">
+                            <strong>Answer:</strong>
+                            <p>${escapeHtml(question.answer)}</p>
+                        </div>` :
+                        `<div class="answer-section">
+                            <button onclick="showAnswerModal(${question.id})">Add Answer</button>
+                        </div>`
+                    }
+                `;
+                questionsList.appendChild(questionElement);
+            });
+        }
+
+        // Handle question submission
+        document.getElementById('questionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('questionFormMessage');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/questions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: document.getElementById('title').value,
+                        description: document.getElementById('description').value,
+                    }),
+                });
+
+                if (response.ok) {
+                    messageDiv.className = 'success';
+                    messageDiv.textContent = 'Question submitted successfully!';
+                    document.getElementById('questionForm').reset();
+                    loadQuestions();
+                } else {
+                    throw new Error('Failed to submit question');
+                }
+            } catch (error) {
+                messageDiv.className = 'error';
+                messageDiv.textContent = 'Error submitting question. Please try again.';
+            }
+        });
+
+        // Show answer modal
+        function showAnswerModal(questionId) {
+            currentQuestionId = questionId;
+            document.getElementById('answerModal').style.display = 'block';
+            document.getElementById('answerPassword').value = '';
+            document.getElementById('answerText').value = '';
+            document.getElementById('answerFormMessage').textContent = '';
+        }
+
+        // Submit answer
+        async function submitAnswer() {
+            const messageDiv = document.getElementById('answerFormMessage');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/questions/${currentQuestionId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        password: document.getElementById('answerPassword').value,
+                        answer: document.getElementById('answerText').value,
+                    }),
+                });
+
+                if (response.ok) {
+                    document.getElementById('answerModal').style.display = 'none';
+                    loadQuestions();
+                } else if (response.status === 401) {
+                    messageDiv.className = 'error';
+                    messageDiv.textContent = 'Incorrect password';
+                } else {
+                    throw new Error('Failed to submit answer');
+                }
+            } catch (error) {
+                messageDiv.className = 'error';
+                messageDiv.textContent = 'Error submitting answer. Please try again.';
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Load questions when page loads
+        loadQuestions();
+    </script>
+</body>
+</html>
